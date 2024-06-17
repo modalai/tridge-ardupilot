@@ -6,10 +6,7 @@ typedef unsigned int speed_t;
 // TODO: This has to be defined in the slpi_proc build and in the PX4 build.
 // Make it accessible from one file to both builds.
 typedef struct {
-    int (*advertise_func_ptr)(const char *topic_name);
-    int (*subscribe_func_ptr)(const char *topic_name);
-    int (*unsubscribe_func_ptr)(const char *topic_name);
-    int (*topic_data_func_ptr)(const char *name, const uint8_t *data, int data_len_in_bytes);
+    int (*send_data_func_ptr)(const uint8_t *data, int data_len_in_bytes);
 
     /*
       get a fd for the SPI bus
@@ -47,16 +44,6 @@ typedef struct {
 #endif
 
 extern "C" {
-       int px4muorb_orb_initialize(qurt_func_ptrs_t *func_ptrs, int32_t clock_offset_us) __EXPORT;
-
-       int px4muorb_topic_advertised(const char *name) __EXPORT;
-
-       int px4muorb_add_subscriber(const char *name) __EXPORT;
-
-       int px4muorb_remove_subscriber(const char *name) __EXPORT;
-
-       int px4muorb_send_topic_data(const char *name, const uint8_t *data, int data_len_in_bytes) __EXPORT;
-
-       float px4muorb_get_cpu_load(void) __EXPORT;
-
+    int slpi_link_client_init(qurt_func_ptrs_t *func_ptrs) __EXPORT;
+    int slpi_link_client_receive(const uint8_t *data, int data_len_in_bytes) __EXPORT;
 }

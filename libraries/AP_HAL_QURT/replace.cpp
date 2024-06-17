@@ -137,7 +137,7 @@ int ArduPilot_main(int argc, const char *argv[])
 
 extern "C" int qurt_arducopter_main(int argc, char* const argv[]);
 
-int px4muorb_orb_initialize(qurt_func_ptrs_t *func_ptrs, int32_t clock_offset_us)
+int slpi_link_client_init(qurt_func_ptrs_t *func_ptrs)
 {
 	HAP_PRINTF("About to call qurt_arducopter_main %p", &qurt_arducopter_main);
 
@@ -151,29 +151,11 @@ int px4muorb_orb_initialize(qurt_func_ptrs_t *func_ptrs, int32_t clock_offset_us
     return 0;
 }
 
-int px4muorb_topic_advertised(const char *name)
+int slpi_link_client_receive(const uint8_t *data, int data_len_in_bytes)
 {
-       return 0;
-}
+    HAP_PRINTF("slpi_link_client_receive: %d bytes", data_len_in_bytes);
 
-int px4muorb_add_subscriber(const char *name)
-{
-       return 0;
-}
-
-int px4muorb_remove_subscriber(const char *name)
-{
-       return 0;
-}
-
-int px4muorb_send_topic_data(const char *name, const uint8_t *data, int data_len_in_bytes)
-{
-       return 0;
-}
-
-float px4muorb_get_cpu_load(void)
-{
-       return 0.0f;
+    return 0;
 }
 
 int __wrap_printf(const char *fmt, ...)
