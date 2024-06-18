@@ -23,8 +23,8 @@ void HAP_printf(const char *file, int line, const char *format, ...)
 	va_start(ap, format);
 	vsnprintf(buf, sizeof(buf), format, ap);
 	va_end(ap);
-        HAP_debug(buf, 0, file, line);
-        //usleep(20000);
+    HAP_debug(buf, 0, file, line);
+    //usleep(20000);
 }
     
 /**
@@ -149,6 +149,27 @@ int slpi_link_client_init(void)
 int slpi_link_client_receive(const uint8_t *data, int data_len_in_bytes)
 {
     HAP_PRINTF("slpi_link_client_receive: %d bytes", data_len_in_bytes);
+
+	struct test_msg {
+		uint8_t msg_id;
+		uint8_t byte_field;
+		uint16_t word16_field;
+		uint32_t word32_field;
+		uint64_t word64_field;
+		float float_field;
+		double double_field;
+	} msg;
+
+	memcpy((void*) &msg, (void*) data, data_len_in_bytes);
+
+	HAP_PRINTF("Parsing struct test_msg");
+	HAP_PRINTF("msg_id = 0x%x", msg.msg_id);
+	HAP_PRINTF("byte_field = 0x%x", msg.byte_field);
+	HAP_PRINTF("word16_field = 0x%x", msg.word16_field);
+	HAP_PRINTF("word32_field = 0x%x", msg.word32_field);
+	HAP_PRINTF("word64_field = 0x%llx", msg.word64_field);
+	HAP_PRINTF("float_field = %f", msg.float_field);
+	HAP_PRINTF("double_field = %f", msg.double_field);
 
     return 0;
 }
