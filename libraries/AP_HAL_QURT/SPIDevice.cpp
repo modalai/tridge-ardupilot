@@ -20,6 +20,7 @@
 #include <AP_HAL/utility/OwnPtr.h>
 #include "Scheduler.h"
 #include "Semaphores.h"
+#include "interface.h"
 #include <stdio.h>
 
 using namespace QURT;
@@ -29,14 +30,12 @@ using namespace QURT;
 
 const char *device_names[] = {"INV1", "INV2", "INV3"};
 
-extern qurt_func_ptrs_t qurt_func_ptrs;
-
 static SPIBus *spi_bus;
 
 SPIBus::SPIBus(void):
     DeviceBus(Scheduler::PRIORITY_SPI)
 {
-    fd = qurt_func_ptrs._config_spi_bus_func_t();
+    fd = sl_client_config_spi_bus();
     HAP_PRINTF("Created SPI bus -> %d", fd);
 }
 
@@ -91,7 +90,7 @@ bool SPIDevice::transfer_fullduplex(const uint8_t *send, uint8_t *recv, uint32_t
     if (recv == nullptr) {
         recv = dummy;
     }
-    int ret = qurt_func_ptrs._spi_transfer_func_t(bus.fd, send, recv, len);
+    int ret = sl_client_spi_transfer(bus.fd, send, recv, len);
     return ret == 0;
 }
 

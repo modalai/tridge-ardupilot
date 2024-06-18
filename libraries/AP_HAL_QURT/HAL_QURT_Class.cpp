@@ -77,10 +77,6 @@ HAL_QURT::HAL_QURT() :
 {
 }
 
-
-// QURT interface pointers
-qurt_func_ptrs_t qurt_func_ptrs {};
-
 static HAL_QURT::Callbacks *_callbacks;
 
 void HAL_QURT::main_thread(void)

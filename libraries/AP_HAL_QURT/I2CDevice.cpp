@@ -18,8 +18,7 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_HAL_QURT/Semaphores.h>
 #include "Scheduler.h"
-
-extern qurt_func_ptrs_t qurt_func_ptrs;
+#include "interface.h"
 
 using namespace QURT;
 
@@ -56,7 +55,7 @@ I2CDevice::I2CDevice(uint8_t busnum, uint8_t address, uint32_t bus_clock, bool u
     if (bus.fd == -2) {
         HAP_PRINTF("Calling _config_i2c_bus_func_t %u",
                    unsigned(i2c_bus_ids[busnum])); qurt_timer_sleep(5000);
-        bus.fd = qurt_func_ptrs._config_i2c_bus_func_t(i2c_bus_ids[busnum], address, bus_clock/1000);
+        bus.fd = sl_client_config_i2c_bus(i2c_bus_ids[busnum], address, bus_clock/1000);
         HAP_PRINTF("Opened I2C bus %u -> %d", unsigned(busnum), bus.fd);
     }
     set_device_bus(busnum);
@@ -82,10 +81,10 @@ bool I2CDevice::transfer(const uint8_t *send, uint32_t send_len,
     }
     if (bus.last_address != _address) {
         HAP_PRINTF("I2C: changing address for fd %d to 0x%02x", bus.fd, _address);
-        qurt_func_ptrs._set_i2c_address_func_t(bus.fd, _address);
+        sl_client_set_address_i2c_bus(bus.fd, _address);
         bus.last_address = _address;
     }
-    return qurt_func_ptrs._i2c_transfer_func_t(bus.fd, send, send_len, recv, recv_len) == 0;
+    return sl_client_i2c_transfer(bus.fd, send, send_len, recv, recv_len) == 0;
 }
 
 /*
