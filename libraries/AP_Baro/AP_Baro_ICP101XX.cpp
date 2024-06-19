@@ -109,7 +109,10 @@ bool AP_Baro_ICP101XX::init()
     
     dev->get_semaphore()->give();
 
-    dev->register_periodic_callback(measure_interval/2, FUNCTOR_BIND_MEMBER(&AP_Baro_ICP101XX::timer, void));
+	// If the measurement is taken at half the interval it will fail. Needs to
+	// wait for the full interval.
+    // dev->register_periodic_callback(measure_interval/2, FUNCTOR_BIND_MEMBER(&AP_Baro_ICP101XX::timer, void));
+    dev->register_periodic_callback(measure_interval, FUNCTOR_BIND_MEMBER(&AP_Baro_ICP101XX::timer, void));
 
     return true;
 
