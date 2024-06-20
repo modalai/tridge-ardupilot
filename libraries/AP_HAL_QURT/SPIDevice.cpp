@@ -62,10 +62,14 @@ bool SPIDevice::transfer(const uint8_t *send, uint32_t send_len,
                          uint8_t *recv, uint32_t recv_len)
 {
     //HAP_PRINTF("SPI transfer %p %u %p %u [%02x %02x]", send, send_len, recv, recv_len, send?send[0]:1, recv?recv[0]:1);
-    if (!send || !recv) {
-        // simplest cases
-        return transfer_fullduplex(send, recv, recv_len?recv_len:send_len);
+
+	// If there is no receive buffer then this is a write transaction
+	// and the data to write is in the send buffer
+    if (!recv) {
+        return transfer_fullduplex(send, (uint8_t*) send, send_len);
     }
+
+	// This is a read transaction
     uint8_t buf[send_len+recv_len];
     if (send_len > 0) {
         memcpy(buf, send, send_len);
@@ -82,16 +86,7 @@ bool SPIDevice::transfer(const uint8_t *send, uint32_t send_len,
 
 bool SPIDevice::transfer_fullduplex(const uint8_t *send, uint8_t *recv, uint32_t len)
 {
-    uint8_t dummy[len];
-    memset(dummy, 0xFF, sizeof(dummy));
-    if (send == nullptr) {
-        send = dummy;
-    }
-    if (recv == nullptr) {
-        recv = dummy;
-    }
-    int ret = sl_client_spi_transfer(bus.fd, send, recv, len);
-    return ret == 0;
+    return (sl_client_spi_transfer(bus.fd, send, recv, len) == 0);
 }
 
 void SPIDevice::acquire_bus(bool accuire)
