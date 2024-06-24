@@ -62,15 +62,15 @@ void Scheduler::init()
 	pthread_create(&_io_thread_ctx, &thread_attr, &Scheduler::_io_thread, this);
 }
 
-#define APM_QURT_MAX_PRIORITY          20
-#define APM_QURT_TIMER_PRIORITY        15
-#define APM_QURT_UART_PRIORITY         14
-#define APM_QURT_NET_PRIORITY          14
-#define APM_QURT_RCIN_PRIORITY         13
-#define APM_QURT_MAIN_PRIORITY         12
-#define APM_QURT_IO_PRIORITY           10
-#define APM_QURT_SCRIPTING_PRIORITY     1
-#define AP_QURT_SENSORS_SCHED_PRIO     12
+#define APM_QURT_MAX_PRIORITY          (200 + 20)
+#define APM_QURT_TIMER_PRIORITY        (200 + 15)
+#define APM_QURT_UART_PRIORITY         (200 + 14)
+#define APM_QURT_NET_PRIORITY          (200 + 14)
+#define APM_QURT_RCIN_PRIORITY         (200 + 13)
+#define APM_QURT_MAIN_PRIORITY         (200 + 12)
+#define APM_QURT_IO_PRIORITY           (200 + 10)
+#define APM_QURT_SCRIPTING_PRIORITY    (200 + 1)
+#define AP_QURT_SENSORS_SCHED_PRIO     (200 + 12)
 
 uint8_t Scheduler::calculate_thread_priority(priority_base base, int8_t priority) const
 {
@@ -114,14 +114,16 @@ bool Scheduler::thread_create(AP_HAL::MemberProc proc, const char *name, uint32_
 
     const uint8_t thread_priority = calculate_thread_priority(base, priority);
 
-    // Add 10k to HAL-independent requested stack size
-    thread->set_stack_size(10 * 1024 + stack_size);
+    // Setting the stack size too large can cause odd behavior!!!
+    thread->set_stack_size(stack_size);
 
     /*
      * We should probably store the thread handlers and join() when exiting,
      * but let's the thread manage itself for now.
      */
     thread->set_auto_free(true);
+
+	DEV_PRINTF("Starting thread %s: Priority %u", name, thread_priority);
 
     if (!thread->start(name, SCHED_FIFO, thread_priority)) {
         delete thread;

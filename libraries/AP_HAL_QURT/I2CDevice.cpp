@@ -72,7 +72,8 @@ I2CDevice::~I2CDevice()
 bool I2CDevice::transfer(const uint8_t *send, uint32_t send_len,
                          uint8_t *recv, uint32_t recv_len)
 {
-    if (bus.fd <= 0) {
+    if (bus.fd < 0) {
+        HAP_PRINTF("I2C: Bad FD %d", bus.fd);
         return false;
     }
     if (!bus.semaphore.check_owner()) {

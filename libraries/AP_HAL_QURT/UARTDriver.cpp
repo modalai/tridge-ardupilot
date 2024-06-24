@@ -119,7 +119,7 @@ size_t QURT::UARTDriver::_write(const uint8_t *buffer, size_t size)
         return 0;
     }
 
-	HAP_PRINTF("Writing %u bytes to serial port %s", size, _port);
+	// HAP_PRINTF("Writing %u bytes to serial port %s", size, _port);
     size_t ret = _writebuf.write(buffer, size);
     _write_mutex.give();
     return ret;
@@ -158,7 +158,7 @@ bool QURT::UARTDriver::_write_pending_bytes(void)
             _writebuf.peekbytes(_mavlink_msg.mav_msg, n);
 			_writebuf.advance(n);
 			if (n > 12) {
-				HAP_PRINTF("Writing %u byte mavlink packet to GCS", n);
+				// HAP_PRINTF("Writing %u byte mavlink packet to GCS", n);
 				(void) sl_client_send_data((const uint8_t*) &_mavlink_msg, n);
 			} else {
 				HAP_PRINTF("Skipping %u byte mavlink packet to GCS. Too short", n);

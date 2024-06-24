@@ -103,6 +103,10 @@ void HAL_QURT::main_thread(void)
 {
     HAP_PRINTF("In main_thread!");
 
+	// Let SLPI image send out it's initialization response before we
+	// try to send anything out.
+	qurt_timer_sleep(1000000);
+
 	// Send a known test message just to make sure everything is working properly
 	// before starting ardupilot
     HAP_PRINTF("Sending first test message");
@@ -112,6 +116,8 @@ void HAL_QURT::main_thread(void)
     _callbacks->setup();
     scheduler->set_system_initialized();
 
+	// Send another test message after completing setup and before we start
+	// the main loop
     HAP_PRINTF("Sending second test message");
 	send_test_message();
 
@@ -119,8 +125,8 @@ void HAL_QURT::main_thread(void)
 
     for (;;) {
    		qurt_timer_sleep(1000000);
-		send_test_message();
-        // _callbacks->loop();
+		// send_test_message();
+        _callbacks->loop();
 		// if (debug_loop_count == 100) {
 		// 	send_test_message();
 		// 	debug_loop_count = 0;
@@ -133,7 +139,7 @@ void HAL_QURT::start_main_thread(Callbacks* callbacks)
 {
     _callbacks = callbacks;
     scheduler->thread_create(FUNCTOR_BIND_MEMBER(&HAL_QURT::main_thread, void), "main_thread",
-                             500000,
+                             (10 * 1024),
                              AP_HAL::Scheduler::PRIORITY_MAIN,
                              0);
 }
