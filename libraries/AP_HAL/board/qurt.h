@@ -105,6 +105,8 @@
 // #define AP_SIM_INS_FILE_ENABLED 0
 // End of SITL on Hardware definitions
 
+#define DEFAULT_SERIAL0_PROTOCOL SerialProtocol_None
+
 #define HAL_PARAM_DEFAULTS_PATH nullptr
 #define HAL_BOARD_STORAGE_DIRECTORY "APM"
 #define HAL_BOARD_LOG_DIRECTORY "APM/logs"

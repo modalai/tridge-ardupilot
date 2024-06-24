@@ -29,12 +29,14 @@
 #include <AP_HAL_Empty/AP_HAL_Empty_Private.h>
 #include <AP_HAL/utility/getopt_cpp.h>
 #include <assert.h>
+#include "interface.h"
+#include "protocol.h"
 
 using namespace QURT;
 
 static UARTDriver serial0Driver("/dev/console");
-static UARTDriver serial1Driver("/dev/tty-4");
-static UARTDriver serial2Driver("/dev/tty-2");
+static UARTDriver serial1Driver("/dev/gcs");
+// static UARTDriver serial2Driver("/dev/tty-2");
 
 static SPIDeviceManager spiDeviceManager;
 static Empty::AnalogIn analogIn;
@@ -52,7 +54,7 @@ HAL_QURT::HAL_QURT() :
     AP_HAL::HAL(
         &serial0Driver,
         &serial1Driver,
-        &serial2Driver,
+        nullptr,
         nullptr,
         nullptr,
         nullptr,
@@ -79,17 +81,51 @@ HAL_QURT::HAL_QURT() :
 
 static HAL_QURT::Callbacks *_callbacks;
 
+void HAL_QURT::send_test_message(void)
+{
+	struct qurt_test_msg msg;
+
+	msg.byte_field = 0x42;
+	msg.word16_field = 0x2309;
+	msg.word32_field = 0x86ee3420;
+	msg.word64_field = 0x34900aa012225267;
+	msg.float_field = 69.59008;
+	msg.double_field = -349.099823;
+
+    HAP_PRINTF("Sending %d byte test message", sizeof(msg));
+
+    (void) sl_client_send_data((const uint8_t*) &msg, sizeof(msg));
+}
+
+// static uint32_t debug_loop_count = 0;
+
 void HAL_QURT::main_thread(void)
 {
     HAP_PRINTF("In main_thread!");
+
+	// Send a known test message just to make sure everything is working properly
+	// before starting ardupilot
+    HAP_PRINTF("Sending first test message");
+	send_test_message();
+
     rcinDriver.init();
     _callbacks->setup();
     scheduler->set_system_initialized();
 
+    HAP_PRINTF("Sending second test message");
+	send_test_message();
+
     HAP_PRINTF("starting loop");
 
     for (;;) {
-        _callbacks->loop();
+   		qurt_timer_sleep(1000000);
+		send_test_message();
+        // _callbacks->loop();
+		// if (debug_loop_count == 100) {
+		// 	send_test_message();
+		// 	debug_loop_count = 0;
+		// }
+		// debug_loop_count++;
     }
 }
 

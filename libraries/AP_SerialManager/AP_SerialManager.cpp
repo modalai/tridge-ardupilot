@@ -176,7 +176,8 @@ const AP_Param::GroupInfo AP_SerialManager::var_info[] = {
     // @Values: 1:MAVlink1, 2:MAVLink2
     // @User: Standard
     // @RebootRequired: True
-    AP_GROUPINFO("0_PROTOCOL",  11, AP_SerialManager, state[0].protocol, SerialProtocol_MAVLink2),
+    // AP_GROUPINFO("0_PROTOCOL",  11, AP_SerialManager, state[0].protocol, SerialProtocol_MAVLink2),
+    AP_GROUPINFO("0_PROTOCOL",  11, AP_SerialManager, state[0].protocol, DEFAULT_SERIAL0_PROTOCOL),
 #endif
 
 #if HAL_HAVE_SERIAL1

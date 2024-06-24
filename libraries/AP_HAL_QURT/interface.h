@@ -4,6 +4,8 @@
 #error "C++ should be defined!!!"
 #endif
 
+#include <stdint.h>
+
 // Functions that are called by the SLPI LINK server into AP client
 extern "C" {
     // Called by the SLPI LINK server to initialize and start AP

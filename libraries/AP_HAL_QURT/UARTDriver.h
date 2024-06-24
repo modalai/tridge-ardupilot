@@ -18,6 +18,7 @@
 #include "AP_HAL_QURT.h"
 #include "Semaphores.h"
 #include <AP_HAL/utility/RingBuffer.h>
+#include "protocol.h"
 
 #define CONSOLE_BUFFER_SIZE 64
 
@@ -33,6 +34,9 @@ public:
 
 	void printf(const char *fmt, ...) override;
 
+    bool _write_pending_bytes(void);
+    virtual void _timer_tick(void) override;
+
 protected:
     void _begin(uint32_t b, uint16_t rxS, uint16_t txS) override;
     size_t _write(const uint8_t *buffer, size_t size) override;
@@ -43,4 +47,17 @@ protected:
     bool _discard_input() override;
 	bool _is_console{ false };
 	char _console_buffer[CONSOLE_BUFFER_SIZE];
+	const char *_port;
+    volatile bool _initialised;
+    volatile bool _in_timer;
+    bool _packetise; // true if writes should try to be on mavlink boundaries
+	struct qurt_mavlink_msg _mavlink_msg;
+
+    // we use in-task ring buffers to reduce the system call cost
+    // of ::read() and ::write() in the main loop
+    ByteBuffer _readbuf{0};
+    ByteBuffer _writebuf{0};
+
+    QURT::Semaphore _write_mutex;
+
 };
