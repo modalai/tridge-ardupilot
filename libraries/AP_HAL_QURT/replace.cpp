@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include "replace.h"
 #include "interface.h"
+#include "protocol.h"
 
 extern "C" {
 
@@ -146,30 +147,49 @@ int slpi_link_client_init(void)
     return 0;
 }
 
+typedef void (*mavlink_data_callback_t)(const uint8_t *data, int len, void* p);
+mavlink_data_callback_t mav_cb = NULL;
+void *mav_cb_ptr = nullptr;
+void register_mavlink_data_callback(mavlink_data_callback_t func, void *p) {
+	mav_cb = func;
+	mav_cb_ptr = p;
+}
+
 int slpi_link_client_receive(const uint8_t *data, int data_len_in_bytes)
 {
-    HAP_PRINTF("slpi_link_client_receive: %d bytes", data_len_in_bytes);
+    // HAP_PRINTF("slpi_link_client_receive: %d bytes", data_len_in_bytes);
 
-	struct test_msg {
-		uint8_t msg_id;
-		uint8_t byte_field;
-		uint16_t word16_field;
-		uint32_t word32_field;
-		uint64_t word64_field;
-		float float_field;
-		double double_field;
-	} msg;
-
-	memcpy((void*) &msg, (void*) data, data_len_in_bytes);
-
-	HAP_PRINTF("Parsing struct test_msg");
-	HAP_PRINTF("msg_id = 0x%x", msg.msg_id);
-	HAP_PRINTF("byte_field = 0x%x", msg.byte_field);
-	HAP_PRINTF("word16_field = 0x%x", msg.word16_field);
-	HAP_PRINTF("word32_field = 0x%x", msg.word32_field);
-	HAP_PRINTF("word64_field = 0x%llx", msg.word64_field);
-	HAP_PRINTF("float_field = %f", msg.float_field);
-	HAP_PRINTF("double_field = %f", msg.double_field);
+	if (data_len_in_bytes != 0) {
+		uint8_t msg_id = data[0];
+		switch (msg_id) {
+		case QURT_MSG_ID_TEST_MSG:
+		{
+			HAP_PRINTF("Got test message");
+			qurt_test_msg msg;
+			memcpy((void*) &msg, (void*) data, data_len_in_bytes);
+			HAP_PRINTF("Parsing struct test_msg");
+			HAP_PRINTF("msg_id = 0x%x", msg.msg_id);
+			HAP_PRINTF("byte_field = 0x%x", msg.byte_field);
+			HAP_PRINTF("word16_field = 0x%x", msg.word16_field);
+			HAP_PRINTF("word32_field = 0x%lx", msg.word32_field);
+			HAP_PRINTF("word64_field = 0x%llx", msg.word64_field);
+			HAP_PRINTF("float_field = %f", msg.float_field);
+			HAP_PRINTF("double_field = %f", msg.double_field);
+			break;
+		}
+		case QURT_MSG_ID_MAVLINK_MSG:
+		{
+			// HAP_PRINTF("Got mavlink message");
+			// HAP_PRINTF("0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x",
+			// 		data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12]);
+			if (mav_cb) mav_cb(&data[1], data_len_in_bytes - 1, mav_cb_ptr);
+			break;
+		}
+		default:
+			HAP_PRINTF("Got unknown message id %d", msg_id);
+			break;
+		}
+	}
 
     return 0;
 }

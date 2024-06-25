@@ -60,4 +60,8 @@ protected:
 
     QURT::Semaphore _write_mutex;
 
+private:
+	static void _mavlink_data_cb(const uint8_t *data, int len, void *p);
+	void _fill_read_buffer(const uint8_t *data, int len);
+
 };

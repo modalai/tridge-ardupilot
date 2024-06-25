@@ -39,6 +39,17 @@ void QURT::UARTDriver::printf(const char *fmt, ...)
 	}
 }
 
+typedef void (*mavlink_data_callback_t)(const uint8_t *data, int len, void* p);
+extern void register_mavlink_data_callback(mavlink_data_callback_t func, void *p);
+
+void QURT::UARTDriver::_mavlink_data_cb(const uint8_t *data, int len, void *p) {
+	((QURT::UARTDriver*) p)->_fill_read_buffer(data, len);
+}
+
+void QURT::UARTDriver::_fill_read_buffer(const uint8_t *data, int len) {
+    _readbuf.write(data, len);
+}
+
 /* QURT implementations of virtual methods */
 void QURT::UARTDriver::_begin(uint32_t b, uint16_t rxS, uint16_t txS)
 {
@@ -62,6 +73,8 @@ void QURT::UARTDriver::_begin(uint32_t b, uint16_t rxS, uint16_t txS)
     if (_writebuf.set_size(txS) && _readbuf.set_size(rxS)) {
         _initialised = true;
     }
+
+	if (_packetise) register_mavlink_data_callback(_mavlink_data_cb, (void *) this);
 }
 
 void QURT::UARTDriver::_end()
@@ -90,6 +103,7 @@ uint32_t QURT::UARTDriver::_available()
     if (!_initialised) {
         return 0;
     }
+	// HAP_PRINTF("Checking serial port %s available", _port);
     return _readbuf.available();
 }
 
@@ -131,7 +145,7 @@ ssize_t QURT::UARTDriver::_read(uint8_t *buffer, uint16_t size)
         return 0;
     }
 
-	HAP_PRINTF("read from serial port %s", _port);
+	// HAP_PRINTF("read from serial port %s", _port);
     return _readbuf.read(buffer, size);
 }
 
@@ -159,7 +173,7 @@ bool QURT::UARTDriver::_write_pending_bytes(void)
 			_writebuf.advance(n);
 			if (n > 12) {
 				// HAP_PRINTF("Writing %u byte mavlink packet to GCS", n);
-				(void) sl_client_send_data((const uint8_t*) &_mavlink_msg, n);
+				(void) sl_client_send_data((const uint8_t*) &_mavlink_msg, n + 1);
 			} else {
 				HAP_PRINTF("Skipping %u byte mavlink packet to GCS. Too short", n);
 			}
