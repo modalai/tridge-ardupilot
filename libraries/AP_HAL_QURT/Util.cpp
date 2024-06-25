@@ -9,6 +9,18 @@ extern const AP_HAL::HAL& hal;
 
 using namespace QURT;
 
+extern "C" {
+    void *fc_heap_alloc(size_t size);
+    void fc_heap_free(void* ptr);
+    size_t fc_heap_size(void);
+    size_t fc_heap_usage(void);
+}
+
+uint32_t Util::available_memory(void)
+{
+    return fc_heap_size() - fc_heap_usage();
+}
+
 #if ENABLE_HEAP
 void *Util::allocate_heap_memory(size_t size)
 {

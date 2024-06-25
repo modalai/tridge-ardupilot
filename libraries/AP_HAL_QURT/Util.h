@@ -15,6 +15,8 @@ public:
      */
     uint64_t get_hw_rtc() const override { return 0; }
 
+    uint32_t available_memory(void) override;
+
 #if ENABLE_HEAP
     // heap functions, note that a heap once alloc'd cannot be dealloc'd
     virtual void *allocate_heap_memory(size_t size) override;
