@@ -37,6 +37,9 @@ public:
     bool _write_pending_bytes(void);
     virtual void _timer_tick(void) override;
 
+    uint32_t bw_in_bytes_per_second() const override;
+    enum AP_HAL::UARTDriver::flow_control get_flow_control(void) override;
+
 protected:
     void _begin(uint32_t b, uint16_t rxS, uint16_t txS) override;
     size_t _write(const uint8_t *buffer, size_t size) override;

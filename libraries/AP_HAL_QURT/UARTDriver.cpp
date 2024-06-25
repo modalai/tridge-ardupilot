@@ -104,7 +104,7 @@ uint32_t QURT::UARTDriver::_available()
         return 0;
     }
 	// HAP_PRINTF("Checking serial port %s available", _port);
-    return _readbuf.available();
+	return _readbuf.available();
 }
 
 uint32_t QURT::UARTDriver::txspace()
@@ -112,7 +112,11 @@ uint32_t QURT::UARTDriver::txspace()
     if (!_initialised) {
         return 0;
     }
-    return _writebuf.space();
+	uint32_t avail = _writebuf.space();
+	if (avail < 128) {
+		HAP_PRINTF("Low UART tx space! %u on port %s", avail, _port);
+	}
+    return avail;
 }
 
 bool QURT::UARTDriver::_discard_input()
@@ -171,7 +175,8 @@ bool QURT::UARTDriver::_write_pending_bytes(void)
             // keep as a single UDP packet
             _writebuf.peekbytes(_mavlink_msg.mav_msg, n);
 			_writebuf.advance(n);
-			if (n > 12) {
+			// Mavlink packets are at least 12 bytes long
+			if (n >= 12) {
 				// HAP_PRINTF("Writing %u byte mavlink packet to GCS", n);
 				(void) sl_client_send_data((const uint8_t*) &_mavlink_msg, n + 1);
 			} else {
@@ -204,3 +209,14 @@ void QURT::UARTDriver::_timer_tick(void)
 
     _in_timer = false;
 }
+
+uint32_t QURT::UARTDriver::bw_in_bytes_per_second() const {
+        if (_packetise) return (250000 * 3);
+		return 5760;
+}
+
+enum AP_HAL::UARTDriver::flow_control QURT::UARTDriver::get_flow_control(void) {
+    if (_packetise) return AP_HAL::UARTDriver::FLOW_CONTROL_ENABLE;
+	return AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE;
+}
+
