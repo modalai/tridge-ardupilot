@@ -35,7 +35,6 @@
 
 extern "C" {
     typedef void (*external_error_handler_t)(void);
-    void fc_set_external_error_handler(external_error_handler_t err_func);
 };
 
 static void crash_error_handler(void)
@@ -112,9 +111,9 @@ void HAL_QURT::send_test_message(void)
 
 void HAL_QURT::main_thread(void)
 {
-    HAP_PRINTF("In main_thread! PTR=%p", &HAL_QURT::main_thread);
+    HAP_PRINTF("In main_thread!");
 
-    //fc_set_external_error_handler(crash_error_handler);
+	sl_client_register_fatal_error_cb(crash_error_handler);
 
     // Let SLPI image send out it's initialization response before we
 	// try to send anything out.

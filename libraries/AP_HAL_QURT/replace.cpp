@@ -138,6 +138,8 @@ extern "C" int qurt_arducopter_main(int argc, char* const argv[]);
 
 int slpi_link_client_init(void)
 {
+	HAP_PRINTF("RELOCATION: slpi_link_client_init is located at 0x%p", &slpi_link_client_init);
+
 	HAP_PRINTF("About to call qurt_arducopter_main %p", &qurt_arducopter_main);
 
 	qurt_arducopter_main(0, NULL);

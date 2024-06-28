@@ -20,6 +20,8 @@ extern "C" {
     // Send a message to the applications processor
     int sl_client_send_data(const uint8_t *data, int data_len_in_bytes);
 
+    void sl_client_register_fatal_error_cb(void (*func)(void));
+
     // Interrupt callback registration
     int sl_client_register_interrupt_callback(int (*func)(int, void*, void*), void* arg);
 
