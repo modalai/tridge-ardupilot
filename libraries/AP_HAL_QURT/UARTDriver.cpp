@@ -103,6 +103,9 @@ uint32_t QURT::UARTDriver::_available()
     if (!_initialised) {
         return 0;
     }
+
+    WITH_SEMAPHORE(_read_mutex);
+
 	// HAP_PRINTF("Checking serial port %s available", _port);
 	return _readbuf.available();
 }
@@ -124,6 +127,9 @@ bool QURT::UARTDriver::_discard_input()
     if (!_initialised) {
         return false;
     }
+
+    WITH_SEMAPHORE(_read_mutex);
+
     _readbuf.clear();
     return true;
 }
@@ -149,6 +155,8 @@ ssize_t QURT::UARTDriver::_read(uint8_t *buffer, uint16_t size)
         return 0;
     }
 
+    WITH_SEMAPHORE(_read_mutex);
+
 	// HAP_PRINTF("read from serial port %s", _port);
     return _readbuf.read(buffer, size);
 }
@@ -165,25 +173,27 @@ bool QURT::UARTDriver::_write_pending_bytes(void)
     uint32_t available_bytes = _writebuf.available();
     uint16_t n = available_bytes;
 
-#if HAL_GCS_ENABLED
+// #if HAL_GCS_ENABLED
     if (_packetise && n > 0) {
         // send on MAVLink packet boundaries if possible
         n = mavlink_packetise(_writebuf, n);
     }
-#endif
+// #endif
 
     if (n > 0) {
+        // keep as a single UDP packet
         if (_packetise) {
-            // keep as a single UDP packet
-            _writebuf.peekbytes(_mavlink_msg.mav_msg, n);
-			_writebuf.advance(n);
-			// Mavlink packets are at least 12 bytes long
-			if (n >= 12) {
-				// HAP_PRINTF("Writing %u byte mavlink packet to GCS", n);
-				(void) sl_client_send_data((const uint8_t*) &_mavlink_msg, n + 1);
-			} else {
+			// Sanity check message size
+			if (n < MAVLINK_MIN_MESSAGE_LENGTH) {
 				HAP_PRINTF("Skipping %u byte mavlink packet to GCS. Too short", n);
+			} else if (n > MAVLINK_MAX_MESSAGE_LENGTH) {
+				HAP_PRINTF("Skipping %u byte mavlink packet to GCS. Too long", n);
+			} else {
+				// HAP_PRINTF("Writing %u byte mavlink packet to GCS", n);
+				_writebuf.peekbytes(_mavlink_msg.mav_msg, n);
+				(void) sl_client_send_data((const uint8_t*) &_mavlink_msg, n + 1);
 			}
+			_writebuf.advance(n);
         }
     }
 

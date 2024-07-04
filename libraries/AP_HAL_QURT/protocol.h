@@ -1,6 +1,8 @@
 
 #include <stdint.h>
-#include <GCS_MAVLink/GCS_MAVLink.h>
+
+#define MAVLINK_MIN_MESSAGE_LENGTH 12
+#define MAVLINK_MAX_MESSAGE_LENGTH (255 + MAVLINK_MIN_MESSAGE_LENGTH)
 
 #pragma once
 
@@ -18,5 +20,5 @@ struct qurt_test_msg {
 #define QURT_MSG_ID_MAVLINK_MSG 2
 struct qurt_mavlink_msg {
 	uint8_t msg_id{QURT_MSG_ID_MAVLINK_MSG};
-    uint8_t mav_msg[MAVLINK_MAX_PAYLOAD_LEN];
+    uint8_t mav_msg[MAVLINK_MAX_MESSAGE_LENGTH];
 };

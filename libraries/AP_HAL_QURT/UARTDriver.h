@@ -61,6 +61,7 @@ protected:
     ByteBuffer _readbuf{0};
     ByteBuffer _writebuf{0};
 
+    QURT::Semaphore _read_mutex;
     QURT::Semaphore _write_mutex;
 
 private:
