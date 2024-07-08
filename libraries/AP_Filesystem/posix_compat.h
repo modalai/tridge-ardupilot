@@ -107,7 +107,7 @@ char *tmpnam(char s[L_tmpnam]);
 #define remove(pathname) apfs_remove(pathname)
 int sprintf(char *str, const char *format, ...);
 #endif
-#endif
+#endif // __cplusplus
 
 #ifdef __cplusplus
 }

@@ -115,6 +115,8 @@ int AP_Filesystem_Posix::fsync(int fd)
     FS_CHECK_ALLOWED(-1);
     return ::fsync(fd);
 #else
+    // we have to pass success here as otherwise it is assumed to be
+    // failed IO and the caller may close the fd and give up
     return 0;
 #endif
 }
