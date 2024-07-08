@@ -38,6 +38,11 @@
 #define AP_FILESYSTEM_HAVE_DIRENT_DTYPE 1
 #endif
 
+#ifndef AP_FILESYSTEM_POSIX_MAP_FILENAME_ALLOC
+// this requires AP_FILESYSTEM_POSIX_MAP_FILENAME_BASEDIR
+#define AP_FILESYSTEM_POSIX_MAP_FILENAME_ALLOC 0
+#endif
+
 // AP_FILESYSTEM_FILE_WRITING_ENABLED is true if you could expect to
 // be able to open and write a non-virtual file.  Notably this
 // excludes virtual files like SYSFS, and the magic param/mission

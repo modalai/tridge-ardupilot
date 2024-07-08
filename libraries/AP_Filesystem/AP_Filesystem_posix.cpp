@@ -41,6 +41,14 @@ extern const AP_HAL::HAL& hal;
  */
 static const char *map_filename(const char *fname)
 {
+#if AP_FILESYSTEM_POSIX_MAP_FILENAME_ALLOC
+    // this system needs to add a prefix to the filename, which means
+    // memory allocation. This is needed for QURT which lacks chdir()
+    char *fname2 = nullptr;
+    asprintf(&fname2, "%s/%s", AP_FILESYSTEM_POSIX_MAP_FILENAME_BASEDIR, fname);
+    return fname2;
+#else
+
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL && !APM_BUILD_TYPE(APM_BUILD_Replay)
     // on SITL only allow paths under subdirectory. Users can still
     // escape with .. if they want to
@@ -53,6 +61,14 @@ static const char *map_filename(const char *fname)
 #endif
     // on Linux allow original name
     return fname;
+#endif // AP_FILESYSTEM_POSIX_MAP_FILENAME_ALLOC
+}
+
+static void map_filename_free(const char *fname)
+{
+#if AP_FILESYSTEM_POSIX_MAP_FILENAME_ALLOC
+    ::free(const_cast<char*>(fname));
+#endif
 }
 
 int AP_Filesystem_Posix::open(const char *fname, int flags, bool allow_absolute_paths)
@@ -65,10 +81,14 @@ int AP_Filesystem_Posix::open(const char *fname, int flags, bool allow_absolute_
     if (::stat(fname, &st) == 0 &&
         ((st.st_mode & S_IFMT) != S_IFREG && (st.st_mode & S_IFMT) != S_IFLNK)) {
         // only allow links and files
+        map_filename_free(fname);
         return -1;
     }
+
     // we automatically add O_CLOEXEC as we always want it for ArduPilot FS usage
-    return ::open(fname, flags | O_CLOEXEC, 0644);
+    auto ret = ::open(fname, flags | O_CLOEXEC, 0644);
+    map_filename_free(fname);
+    return ret;
 }
 
 int AP_Filesystem_Posix::close(int fd)
@@ -109,7 +129,9 @@ int AP_Filesystem_Posix::stat(const char *pathname, struct stat *stbuf)
 {
     FS_CHECK_ALLOWED(-1);
     pathname = map_filename(pathname);
-    return ::stat(pathname, stbuf);
+    auto ret = ::stat(pathname, stbuf);
+    map_filename_free(pathname);
+    return ret;
 }
 
 int AP_Filesystem_Posix::unlink(const char *pathname)
@@ -122,6 +144,7 @@ int AP_Filesystem_Posix::unlink(const char *pathname)
     if (ret == -1) {
         ret = ::unlink(pathname);
     }
+    map_filename_free(pathname);
     return ret;
 }
 
@@ -129,14 +152,18 @@ int AP_Filesystem_Posix::mkdir(const char *pathname)
 {
     FS_CHECK_ALLOWED(-1);
     pathname = map_filename(pathname);
-    return ::mkdir(const_cast<char*>(pathname), 0775);
+    auto ret = ::mkdir(const_cast<char*>(pathname), 0775);
+    map_filename_free(pathname);
+    return ret;
 }
 
 void *AP_Filesystem_Posix::opendir(const char *pathname)
 {
     FS_CHECK_ALLOWED(nullptr);
     pathname = map_filename(pathname);
-    return (void*)::opendir(pathname);
+    auto *ret = (void*)::opendir(pathname);
+    map_filename_free(pathname);
+    return ret;
 }
 
 struct dirent *AP_Filesystem_Posix::readdir(void *dirp)
@@ -156,7 +183,10 @@ int AP_Filesystem_Posix::rename(const char *oldpath, const char *newpath)
     FS_CHECK_ALLOWED(-1);
     oldpath = map_filename(oldpath);
     newpath = map_filename(newpath);
-    return ::rename(oldpath, newpath);
+    auto ret = ::rename(oldpath, newpath);
+    map_filename_free(oldpath);
+    map_filename_free(newpath);
+    return ret;
 }
 
 // return free disk space in bytes
@@ -167,8 +197,10 @@ int64_t AP_Filesystem_Posix::disk_free(const char *path)
     path = map_filename(path);
     struct statfs stats;
     if (::statfs(path, &stats) < 0) {
+        map_filename_free(path);
         return -1;
     }
+    map_filename_free(path);
     return (((int64_t)stats.f_bavail) * stats.f_bsize);
 #else
     return -1;
@@ -183,8 +215,10 @@ int64_t AP_Filesystem_Posix::disk_space(const char *path)
     path = map_filename(path);
     struct statfs stats;
     if (::statfs(path, &stats) < 0) {
+        map_filename_free(path);
         return -1;
     }
+    map_filename_free(path);
     return (((int64_t)stats.f_blocks) * stats.f_bsize);
 #else
     return -1;
@@ -204,7 +238,9 @@ bool AP_Filesystem_Posix::set_mtime(const char *filename, const uint32_t mtime_s
     times.actime = mtime_sec;
     times.modtime = mtime_sec;
 
-    return utime(filename, &times) == 0;
+    auto ret = utime(filename, &times) == 0;
+    map_filename_free(filename);
+    return ret;
 #else
     return false;
 #endif
