@@ -37,7 +37,7 @@
 extern const AP_HAL::HAL& hal;
 
 /*
-  map a filename for SITL so operations are relative to the current directory
+  map a filename so operations are relative to the current directory if needed
  */
 static const char *map_filename(const char *fname)
 {
@@ -81,13 +81,17 @@ int AP_Filesystem_Posix::open(const char *fname, int flags, bool allow_absolute_
     if (::stat(fname, &st) == 0 &&
         ((st.st_mode & S_IFMT) != S_IFREG && (st.st_mode & S_IFMT) != S_IFLNK)) {
         // only allow links and files
-        map_filename_free(fname);
+        if (!allow_absolute_paths) {
+            map_filename_free(fname);
+        }
         return -1;
     }
 
     // we automatically add O_CLOEXEC as we always want it for ArduPilot FS usage
     auto ret = ::open(fname, flags | O_CLOEXEC, 0644);
-    map_filename_free(fname);
+    if (!allow_absolute_paths) {
+        map_filename_free(fname);
+    }
     return ret;
 }
 
