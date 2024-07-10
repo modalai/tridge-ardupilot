@@ -199,11 +199,6 @@ void UARTDriver_Local::_begin(uint32_t b, uint16_t rxS, uint16_t txS)
         return;
     }
 
-    // QURT wants 420000 for CRSF, ArduPilot driver wants 416666
-    if (b == 416666) {
-        b = 420000;
-    }
-
     UARTDriver::_begin(b, rxS, txS);
 
     if (baudrate != b || fd == -1) {
