@@ -151,18 +151,22 @@ int main()
         return -1;
     }
 
-    const char *bcast_address = get_ipv4_broadcast();
-    printf("Broadcast address=%s\n", bcast_address);
-    inet_aton(bcast_address, &remote_addr.sin_addr);
+    // const char *bcast_address = get_ipv4_broadcast();
+    // printf("Broadcast address=%s\n", bcast_address);
+    // inet_aton(bcast_address, &remote_addr.sin_addr);
+	remote_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     remote_addr.sin_family = AF_INET;
-    remote_addr.sin_port = htons(UDP_OUT_PORT);
+    // remote_addr.sin_port = htons(UDP_OUT_PORT);
+	remote_addr.sin_port = htons(14559);
 
     int one = 1;
     setsockopt(socket_fd,SOL_SOCKET,SO_BROADCAST,(char *)&one,sizeof(one));
 
     struct sockaddr_in any {};
     any.sin_addr.s_addr = INADDR_ANY;
-    any.sin_port = htons(15550);
+    any.sin_family = AF_INET;
+    // any.sin_port = htons(15550);
+    any.sin_port = htons(14558);
 
     if (bind(socket_fd, (struct sockaddr *)&any, sizeof(any)) == 0) {
         printf("Bind OK\n");
